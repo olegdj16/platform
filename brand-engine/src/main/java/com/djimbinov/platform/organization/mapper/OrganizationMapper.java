@@ -5,15 +5,20 @@ import com.djimbinov.platform.organization.dto.OrganizationResponse;
 import com.djimbinov.platform.organization.model.Organization;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Component
 public class OrganizationMapper {
 
   public Organization toModel(OrganizationRequest request) {
+    Instant now = Instant.now();
+
     return new Organization(
           UUID.randomUUID(),
-          request.getName()
+          request.getName(),
+          now,
+          now
     );
   }
 
