@@ -62,4 +62,16 @@ public class Project {
   public Organization getOrganization() {
     return organization;
   }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void setOrganization(Organization organization) {
+    this.organization = organization;
+  }
 }

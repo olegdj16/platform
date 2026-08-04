@@ -3,6 +3,7 @@ package com.djimbinov.platform.exception;
 import com.djimbinov.platform.common.ApiResponse;
 import com.djimbinov.platform.organization.exception.OrganizationNotFoundException;
 import com.djimbinov.platform.project.exception.ProjectAlreadyExistsException;
+import com.djimbinov.platform.project.exception.ProjectNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,5 +71,14 @@ public class GlobalExceptionHandler {
           .body(ApiResponse.error(
                 "An unexpected error occurred."
           ));
+  }
+
+  @ExceptionHandler(ProjectNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleProjectNotFound(
+        ProjectNotFoundException ex
+  ) {
+    return ResponseEntity
+          .status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error(ex.getMessage()));
   }
 }
