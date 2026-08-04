@@ -36,4 +36,14 @@ public class ProjectMapper {
           project.getCreatedAt()
     );
   }
+
+  public void updateModel(
+        Project project,
+        ProjectRequest request,
+        Organization organization
+  ) {
+    project.setOrganization(organization);
+    project.setName(request.getName());
+    project.setDescription(request.getDescription());
+  }
 }

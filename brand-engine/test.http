@@ -27,3 +27,19 @@ Content-Type: application/json
 
 ### Get projects
 GET http://localhost:8080/api/v1/projects
+
+###
+GET http://localhost:8080/api/v1/projects/58660908-5d6f-4ae6-9b18-6ebed99ba513
+
+###
+PUT http://localhost:8080/api/v1/projects/58660908-5d6f-4ae6-9b18-6ebed99ba513
+Content-Type: application/json
+
+{
+  "organizationId": "d9e446a6-c314-413a-8573-2a621495f565",
+  "name": "Brand Engine Updated 2",
+  "description": "Updated description from PUT endpoint"
+}
+
+###
+DELETE http://localhost:8080/api/v1/projects/58660908-5d6f-4ae6-9b18-6ebed99ba513

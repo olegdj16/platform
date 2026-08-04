@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import com.djimbinov.platform.organization.exception.OrganizationNotFoundException;
 import com.djimbinov.platform.project.exception.ProjectAlreadyExistsException;
+import com.djimbinov.platform.project.exception.ProjectNotFoundException;
+import java.util.UUID;
 
 @Service
 public class ProjectService {
@@ -60,6 +62,41 @@ public class ProjectService {
           .stream()
           .map(projectMapper::toResponse)
           .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public ProjectResponse findById(UUID id) {
+    Project project = projectRepository.findById(id)
+          .orElseThrow(() -> new ProjectNotFoundException(id));
+
+    return projectMapper.toResponse(project);
+  }
+
+  @Transactional
+  public ProjectResponse update(UUID id, ProjectRequest request) {
+
+    Project project = projectRepository.findById(id)
+          .orElseThrow(() -> new ProjectNotFoundException(id));
+
+    Organization organization = organizationRepository
+          .findById(request.getOrganizationId())
+          .orElseThrow(() -> new OrganizationNotFoundException(
+                request.getOrganizationId()
+          ));
+
+    projectMapper.updateModel(project, request, organization);
+
+    Project updatedProject = projectRepository.save(project);
+
+    return projectMapper.toResponse(updatedProject);
+  }
+
+  @Transactional
+  public void delete(UUID id) {
+    Project project = projectRepository.findById(id)
+          .orElseThrow(() -> new ProjectNotFoundException(id));
+
+    projectRepository.delete(project);
   }
 }
 

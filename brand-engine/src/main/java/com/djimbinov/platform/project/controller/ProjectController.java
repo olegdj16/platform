@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -40,5 +42,28 @@ public class ProjectController {
           "Projects loaded successfully",
           projectService.findAll()
     );
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<ProjectResponse> findById(
+        @PathVariable UUID id
+  ) {
+    return ResponseEntity.ok(projectService.findById(id));
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<ProjectResponse> update(
+        @PathVariable UUID id,
+        @Valid @RequestBody ProjectRequest request
+  ) {
+    return ResponseEntity.ok(projectService.update(id, request));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(
+        @PathVariable UUID id
+  ) {
+    projectService.delete(id);
+    return ResponseEntity.noContent().build();
   }
 }
