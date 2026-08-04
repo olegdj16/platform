@@ -43,3 +43,72 @@ Content-Type: application/json
 
 ###
 DELETE http://localhost:8080/api/v1/projects/58660908-5d6f-4ae6-9b18-6ebed99ba513
+
+###
+### Create Document
+POST http://localhost:8080/api/v1/documents
+Content-Type: application/json
+
+{
+  "projectId": "58660908-5d6f-4ae6-9b18-6ebed99ba513",
+  "name": "Architecture Diagram",
+  "originalFilename": "architecture.pdf",
+  "contentType": "application/pdf",
+  "storageKey": "documents/architecture.pdf",
+  "sizeBytes": 245760
+}
+
+### Get Documents for Project
+GET http://localhost:8080/api/v1/documents/project/5f68c72f-26d4-4e4f-be86-6374c8c6c745
+
+###
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "organizationId": "d9e446a6-c314-413a-8573-2a621495f565",
+  "name": "Brand Engine Documents",
+  "description": "Project for testing document metadata"
+}
+
+###
+### Create Document
+POST http://localhost:8080/api/v1/documents
+Content-Type: application/json
+
+{
+  "projectId": "5f68c72f-26d4-4e4f-be86-6374c8c6c745",
+  "name": "Architecture Diagram",
+  "originalFilename": "architecture.pdf",
+  "contentType": "application/pdf",
+  "storageKey": "documents/architecture.pdf",
+  "sizeBytes": 245760
+}
+
+### Get Documents for Project
+GET http://localhost:8080/api/v1/documents/project/5f68c72f-26d4-4e4f-be86-6374c8c6c745
+
+###
+GET http://localhost:8080/api/v1/documents/888116bb-1f5e-40b3-957d-13add10aa76a
+
+###
+GET http://localhost:8080/api/v1/documents/project/00000000-0000-0000-0000-000000000000
+
+###
+PUT http://localhost:8080/api/v1/documents/888116bb-1f5e-40b3-957d-13add10aa76a
+Content-Type: application/json
+
+{
+  "projectId": "5f68c72f-26d4-4e4f-be86-6374c8c6c745",
+  "name": "Updated Architecture Diagram",
+  "originalFilename": "architecture.pdf",
+  "contentType": "application/pdf",
+  "storageKey": "documents/architecture.pdf",
+  "sizeBytes": 245760
+}
+
+###
+DELETE http://localhost:8080/api/v1/documents/888116bb-1f5e-40b3-957d-13add10aa76a
+
+###
+GET http://localhost:8080/api/v1/documents/888116bb-1f5e-40b3-957d-13add10aa76a
