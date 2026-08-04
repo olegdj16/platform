@@ -1,6 +1,7 @@
 package com.djimbinov.platform.exception;
 
 import com.djimbinov.platform.common.ApiResponse;
+import com.djimbinov.platform.document.exception.DocumentNotFoundException;
 import com.djimbinov.platform.organization.exception.OrganizationNotFoundException;
 import com.djimbinov.platform.project.exception.ProjectAlreadyExistsException;
 import com.djimbinov.platform.project.exception.ProjectNotFoundException;
@@ -80,5 +81,14 @@ public class GlobalExceptionHandler {
     return ResponseEntity
           .status(HttpStatus.NOT_FOUND)
           .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(DocumentNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDocumentNotFound(
+        DocumentNotFoundException exception
+  ) {
+    return ResponseEntity
+          .status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error(exception.getMessage()));
   }
 }
