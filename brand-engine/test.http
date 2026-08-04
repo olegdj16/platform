@@ -10,3 +10,20 @@ Content-Type: application/json
 
 ### Get organizations
 GET http://localhost:8080/api/v1/organizations
+
+###
+
+### Create project
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "organizationId": "d9e446a6-c314-413a-8573-2a621495f565",
+  "name": "Brand Engine",
+  "description": "AI-assisted brand and domain research project"
+}
+
+###
+
+### Get projects
+GET http://localhost:8080/api/v1/projects
