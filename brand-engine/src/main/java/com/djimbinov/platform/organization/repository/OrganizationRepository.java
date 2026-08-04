@@ -1,22 +1,10 @@
 package com.djimbinov.platform.organization.repository;
 
 import com.djimbinov.platform.organization.model.Organization;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
-@Repository
-public class OrganizationRepository {
-
-  private final List<Organization> organizations = new ArrayList<>();
-
-  public Organization save(Organization organization) {
-    organizations.add(organization);
-    return organization;
-  }
-
-  public List<Organization> findAll() {
-    return organizations;
-  }
+public interface OrganizationRepository
+      extends JpaRepository<Organization, UUID> {
 }

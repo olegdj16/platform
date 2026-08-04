@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: brand-engine
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/brand_engine
+    username: brand_engine_app
+    password: BrandEngine2026
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
