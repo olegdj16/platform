@@ -2,6 +2,7 @@ package com.djimbinov.platform.exception;
 
 import com.djimbinov.platform.common.ApiResponse;
 import com.djimbinov.platform.document.exception.DocumentNotFoundException;
+import com.djimbinov.platform.document.exception.FileStorageException;
 import com.djimbinov.platform.organization.exception.OrganizationNotFoundException;
 import com.djimbinov.platform.project.exception.ProjectAlreadyExistsException;
 import com.djimbinov.platform.project.exception.ProjectNotFoundException;
@@ -11,14 +12,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(FileStorageException.class)
+  public ResponseEntity<ApiResponse<Void>> handleFileStorageException(
+        FileStorageException exception
+  ) {
+    return ResponseEntity
+          .status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error(exception.getMessage()));
+  }
 
   @ExceptionHandler(BadCredentialsException.class)
   public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
@@ -109,4 +117,6 @@ public class GlobalExceptionHandler {
           .status(HttpStatus.NOT_FOUND)
           .body(ApiResponse.error(exception.getMessage()));
   }
+
+
 }

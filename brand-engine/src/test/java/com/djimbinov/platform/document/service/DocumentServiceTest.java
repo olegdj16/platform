@@ -14,6 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.djimbinov.platform.document.storage.FileStorageService;
+import com.djimbinov.platform.document.dto.DocumentUploadRequest;
+import com.djimbinov.platform.document.storage.StoredFile;
+import org.springframework.mock.web.MockMultipartFile;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,6 +41,9 @@ import static org.mockito.Mockito.when;
 class DocumentServiceTest {
 
   @Mock
+  private FileStorageService fileStorageService;
+
+  @Mock
   private DocumentRepository documentRepository;
 
   @Mock
@@ -50,7 +59,8 @@ class DocumentServiceTest {
     documentService = new DocumentService(
           documentRepository,
           projectRepository,
-          documentMapper
+          documentMapper,
+          fileStorageService
     );
   }
 
@@ -442,5 +452,187 @@ class DocumentServiceTest {
     verify(documentRepository, never()).delete(any());
     verifyNoInteractions(projectRepository);
     verifyNoInteractions(documentMapper);
+  }
+
+  @Test
+  void shouldUploadDocumentWhenRequestIsValid() {
+    UUID projectId = UUID.randomUUID();
+    UUID documentId = UUID.randomUUID();
+    Instant createdAt = Instant.now();
+
+    MockMultipartFile file = new MockMultipartFile(
+          "file",
+          "architecture.pdf",
+          "application/pdf",
+          "pdf-content".getBytes()
+    );
+
+    DocumentUploadRequest request = new DocumentUploadRequest(
+          projectId,
+          "Architecture Diagram",
+          file
+    );
+
+    Project project = mock(Project.class);
+    Document document = mock(Document.class);
+    Document savedDocument = mock(Document.class);
+
+    StoredFile storedFile = new StoredFile(
+          "architecture.pdf",
+          "application/pdf",
+          "generated-file-key.pdf",
+          file.getSize()
+    );
+
+    DocumentResponse expectedResponse = new DocumentResponse(
+          documentId,
+          projectId,
+          request.name(),
+          storedFile.originalFilename(),
+          storedFile.contentType(),
+          storedFile.storageKey(),
+          storedFile.sizeBytes(),
+          createdAt
+    );
+
+    when(projectRepository.findById(projectId))
+          .thenReturn(Optional.of(project));
+
+    when(fileStorageService.store(file))
+          .thenReturn(storedFile);
+
+    when(documentMapper.toModel(
+          any(DocumentRequest.class),
+          eq(project)
+    )).thenReturn(document);
+
+    when(documentRepository.save(document))
+          .thenReturn(savedDocument);
+
+    when(documentMapper.toResponse(savedDocument))
+          .thenReturn(expectedResponse);
+
+    DocumentResponse result = documentService.upload(request);
+
+    assertSame(expectedResponse, result);
+    assertEquals(documentId, result.id());
+    assertEquals("generated-file-key.pdf", result.storageKey());
+
+    verify(projectRepository).findById(projectId);
+    verify(fileStorageService).store(file);
+
+    verify(documentMapper).toModel(
+          argThat(actualRequest ->
+                projectId.equals(actualRequest.projectId())
+                      && "Architecture Diagram"
+                      .equals(actualRequest.name())
+                      && "architecture.pdf"
+                      .equals(actualRequest.originalFilename())
+                      && "application/pdf"
+                      .equals(actualRequest.contentType())
+                      && "generated-file-key.pdf"
+                      .equals(actualRequest.storageKey())
+                      && Long.valueOf(file.getSize())
+                      .equals(actualRequest.sizeBytes())
+          ),
+          eq(project)
+    );
+
+    verify(documentRepository).save(document);
+    verify(documentMapper).toResponse(savedDocument);
+    verify(fileStorageService, never()).delete(any());
+  }
+
+  @Test
+  void shouldThrowProjectNotFoundExceptionBeforeStoringFile() {
+    UUID projectId = UUID.randomUUID();
+
+    MockMultipartFile file = new MockMultipartFile(
+          "file",
+          "architecture.pdf",
+          "application/pdf",
+          "pdf-content".getBytes()
+    );
+
+    DocumentUploadRequest request = new DocumentUploadRequest(
+          projectId,
+          "Architecture Diagram",
+          file
+    );
+
+    when(projectRepository.findById(projectId))
+          .thenReturn(Optional.empty());
+
+    ProjectNotFoundException exception = assertThrows(
+          ProjectNotFoundException.class,
+          () -> documentService.upload(request)
+    );
+
+    assertEquals(
+          "Project not found: " + projectId,
+          exception.getMessage()
+    );
+
+    verify(projectRepository).findById(projectId);
+    verifyNoInteractions(fileStorageService);
+    verifyNoInteractions(documentRepository);
+    verifyNoInteractions(documentMapper);
+  }
+
+  @Test
+  void shouldDeleteStoredFileWhenDatabaseSaveFails() {
+    UUID projectId = UUID.randomUUID();
+
+    MockMultipartFile file = new MockMultipartFile(
+          "file",
+          "architecture.pdf",
+          "application/pdf",
+          "pdf-content".getBytes()
+    );
+
+    DocumentUploadRequest request = new DocumentUploadRequest(
+          projectId,
+          "Architecture Diagram",
+          file
+    );
+
+    Project project = mock(Project.class);
+    Document document = mock(Document.class);
+
+    StoredFile storedFile = new StoredFile(
+          "architecture.pdf",
+          "application/pdf",
+          "generated-file-key.pdf",
+          file.getSize()
+    );
+
+    when(projectRepository.findById(projectId))
+          .thenReturn(Optional.of(project));
+
+    when(fileStorageService.store(file))
+          .thenReturn(storedFile);
+
+    when(documentMapper.toModel(
+          any(DocumentRequest.class),
+          eq(project)
+    )).thenReturn(document);
+
+    RuntimeException databaseException =
+          new RuntimeException("Database failure");
+
+    when(documentRepository.save(document))
+          .thenThrow(databaseException);
+
+    RuntimeException exception = assertThrows(
+          RuntimeException.class,
+          () -> documentService.upload(request)
+    );
+
+    assertSame(databaseException, exception);
+
+    verify(fileStorageService)
+          .delete("generated-file-key.pdf");
+
+    verify(documentMapper, never()).toResponse(any());
   }
 }
