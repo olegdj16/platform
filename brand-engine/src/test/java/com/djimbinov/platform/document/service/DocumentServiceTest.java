@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.djimbinov.platform.document.storage.FileStorageService;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,6 +36,9 @@ import static org.mockito.Mockito.when;
 class DocumentServiceTest {
 
   @Mock
+  private FileStorageService fileStorageService;
+
+  @Mock
   private DocumentRepository documentRepository;
 
   @Mock
@@ -50,7 +54,8 @@ class DocumentServiceTest {
     documentService = new DocumentService(
           documentRepository,
           projectRepository,
-          documentMapper
+          documentMapper,
+          fileStorageService
     );
   }
 

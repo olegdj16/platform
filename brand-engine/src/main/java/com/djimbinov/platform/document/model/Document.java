@@ -97,4 +97,20 @@ public class Document {
   public void setProject(Project project) {
     this.project = project;
   }
+
+  public void setOriginalFilename(String originalFilename) {
+    this.originalFilename = originalFilename;
+  }
+
+  public void setContentType(String contentType) {
+    this.contentType = contentType;
+  }
+
+  public void setStorageKey(String storageKey) {
+    this.storageKey = storageKey;
+  }
+
+  public void setSizeBytes(Long sizeBytes) {
+    this.sizeBytes = sizeBytes;
+  }
 }

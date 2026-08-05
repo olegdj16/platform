@@ -6,11 +6,14 @@ import com.djimbinov.platform.document.exception.DocumentNotFoundException;
 import com.djimbinov.platform.document.mapper.DocumentMapper;
 import com.djimbinov.platform.document.model.Document;
 import com.djimbinov.platform.document.repository.DocumentRepository;
+import com.djimbinov.platform.document.storage.FileStorageService;
 import com.djimbinov.platform.project.exception.ProjectNotFoundException;
 import com.djimbinov.platform.project.model.Project;
 import com.djimbinov.platform.project.repository.ProjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.djimbinov.platform.document.dto.DocumentUploadRequest;
+import com.djimbinov.platform.document.storage.StoredFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,15 +24,18 @@ public class DocumentService {
   private final DocumentRepository documentRepository;
   private final ProjectRepository projectRepository;
   private final DocumentMapper documentMapper;
+  private final FileStorageService fileStorageService;
 
   public DocumentService(
         DocumentRepository documentRepository,
         ProjectRepository projectRepository,
-        DocumentMapper documentMapper
+        DocumentMapper documentMapper,
+        FileStorageService fileStorageService
   ) {
     this.documentRepository = documentRepository;
     this.projectRepository = projectRepository;
     this.documentMapper = documentMapper;
+    this.fileStorageService = fileStorageService;
   }
 
   @Transactional
@@ -93,5 +99,38 @@ public class DocumentService {
           .orElseThrow(() -> new DocumentNotFoundException(id));
 
     documentRepository.delete(document);
+  }
+
+  @Transactional
+  public DocumentResponse upload(DocumentUploadRequest request) {
+
+    Project project = projectRepository.findById(request.projectId())
+          .orElseThrow(() ->
+                new ProjectNotFoundException(request.projectId()));
+
+    StoredFile storedFile =
+          fileStorageService.store(request.file());
+
+    DocumentRequest documentRequest = new DocumentRequest(
+          request.projectId(),
+          request.name(),
+          storedFile.originalFilename(),
+          storedFile.contentType(),
+          storedFile.storageKey(),
+          storedFile.sizeBytes()
+    );
+
+    try {
+      Document document =
+            documentMapper.toModel(documentRequest, project);
+
+      Document savedDocument =
+            documentRepository.save(document);
+
+      return documentMapper.toResponse(savedDocument);
+    } catch (RuntimeException exception) {
+      fileStorageService.delete(storedFile.storageKey());
+      throw exception;
+    }
   }
 }
