@@ -1,10 +1,12 @@
 package com.djimbinov.platform.organization.controller;
 
+import com.djimbinov.platform.auth.security.JwtAuthenticationFilter;
 import com.djimbinov.platform.organization.dto.OrganizationRequest;
 import com.djimbinov.platform.organization.dto.OrganizationResponse;
 import com.djimbinov.platform.organization.service.OrganizationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -24,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(OrganizationController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class OrganizationControllerTest {
 
   @Autowired
@@ -34,6 +37,9 @@ class OrganizationControllerTest {
 
   @MockitoBean
   private OrganizationService organizationService;
+
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Test
   void shouldCreateOrganizationWhenRequestIsValid() throws Exception {

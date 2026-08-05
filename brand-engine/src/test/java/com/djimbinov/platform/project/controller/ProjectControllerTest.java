@@ -1,11 +1,13 @@
 package com.djimbinov.platform.project.controller;
 
+import com.djimbinov.platform.auth.security.JwtAuthenticationFilter;
 import com.djimbinov.platform.project.dto.ProjectRequest;
 import com.djimbinov.platform.project.dto.ProjectResponse;
 import com.djimbinov.platform.project.exception.ProjectNotFoundException;
 import com.djimbinov.platform.project.service.ProjectService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -33,6 +35,7 @@ import tools.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
 
 @WebMvcTest(ProjectController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class ProjectControllerTest {
 
   @Autowired
@@ -43,6 +46,9 @@ class ProjectControllerTest {
 
   @MockitoBean
   private ProjectService projectService;
+
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Test
   void shouldReturnProjectWhenProjectExists() throws Exception {

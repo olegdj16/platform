@@ -1,0 +1,25 @@
+### Register new user
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "oleg16@gmail.com",
+  "password": "Password123!"
+}
+
+### Login
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "oleg16@gmail.com",
+  "password": "Password123!"
+}
+
+### Protected endpoint without token
+GET http://localhost:8080/api/v1/projects
+
+###
+### Protected endpoint with token
+GET http://localhost:8080/api/v1/projects
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJvbGVnMTZAZ21haWwuY29tIiwiaWF0IjoxNzg1OTAxNzYwLCJleHAiOjE3ODU5ODgxNjB9.cRQh0_tVAmQyngX1w2uE6dcqNxoOvXZu4Q3JMVBaKY1TyEhkyIOoOApWUtZiCn2k
