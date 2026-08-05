@@ -2,6 +2,7 @@ package com.djimbinov.platform.document.controller;
 
 import com.djimbinov.platform.auth.security.JwtAuthenticationFilter;
 import com.djimbinov.platform.document.dto.DocumentResponse;
+import com.djimbinov.platform.document.dto.DocumentUploadRequest;
 import com.djimbinov.platform.document.exception.DocumentNotFoundException;
 import com.djimbinov.platform.document.service.DocumentService;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
+
+import org.springframework.mock.web.MockMultipartFile;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.mockito.ArgumentMatchers.argThat;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +37,6 @@ import com.djimbinov.platform.document.dto.DocumentRequest;
 import org.springframework.http.MediaType;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -346,5 +350,60 @@ class DocumentControllerTest {
           .andExpect(jsonPath("$.data").isEmpty());
 
     verify(documentService).delete(documentId);
+  }
+
+  @Test
+  void shouldUploadDocumentWhenRequestIsValid() throws Exception {
+    UUID projectId = UUID.randomUUID();
+    UUID documentId = UUID.randomUUID();
+    Instant createdAt = Instant.now();
+
+    MockMultipartFile file = new MockMultipartFile(
+          "file",
+          "architecture.pdf",
+          "application/pdf",
+          "pdf-content".getBytes()
+    );
+
+    DocumentResponse response = new DocumentResponse(
+          documentId,
+          projectId,
+          "Architecture Diagram",
+          "architecture.pdf",
+          "application/pdf",
+          "generated-file-key.pdf",
+          file.getSize(),
+          createdAt
+    );
+
+    when(documentService.upload(any(DocumentUploadRequest.class)))
+          .thenReturn(response);
+
+    mockMvc.perform(
+                multipart("/api/v1/documents/upload")
+                      .file(file)
+                      .param("projectId", projectId.toString())
+                      .param("name", "Architecture Diagram")
+          )
+          .andExpect(status().isCreated())
+          .andExpect(jsonPath("$.success").value(true))
+          .andExpect(jsonPath("$.message")
+                .value("Document uploaded successfully"))
+          .andExpect(jsonPath("$.data.projectId")
+                .value(projectId.toString()))
+          .andExpect(jsonPath("$.data.name")
+                .value("Architecture Diagram"))
+          .andExpect(jsonPath("$.data.originalFilename")
+                .value("architecture.pdf"))
+          .andExpect(jsonPath("$.data.storageKey")
+                .value("generated-file-key.pdf"));
+
+    verify(documentService).upload(
+          argThat(request ->
+                projectId.equals(request.projectId())
+                      && "Architecture Diagram".equals(request.name())
+                      && request.file() != null
+          )
+    );
   }
 }
