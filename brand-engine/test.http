@@ -112,3 +112,65 @@ DELETE http://localhost:8080/api/v1/documents/888116bb-1f5e-40b3-957d-13add10aa7
 
 ###
 GET http://localhost:8080/api/v1/documents/888116bb-1f5e-40b3-957d-13add10aa76a
+
+### Get current authenticated user
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJvbGVnMTZAZ21haWwuY29tIiwiaWF0IjoxNzg1OTAxNzYwLCJleHAiOjE3ODU5ODgxNjB9.cRQh0_tVAmQyngX1w2uE6dcqNxoOvXZu4Q3JMVBaKY1TyEhkyIOoOApWUtZiCn2k
+
+### Update current user email
+PUT http://localhost:8080/api/v1/users/me
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJvbGVnMTZAZ21haWwuY29tIiwiaWF0IjoxNzg1OTAxNzYwLCJleHAiOjE3ODU5ODgxNjB9.cRQh0_tVAmQyngX1w2uE6dcqNxoOvXZu4Q3JMVBaKY1TyEhkyIOoOApWUtZiCn2k
+Content-Type: application/json
+
+{
+  "email": "oleg.updated1@gmail.com"
+}
+
+### Change current user password
+PUT http://localhost:8080/api/v1/users/me/password
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJvbGVnMTZAZ21haWwuY29tIiwiaWF0IjoxNzg1OTAxNzYwLCJleHAiOjE3ODU5ODgxNjB9.cRQh0_tVAmQyngX1w2uE6dcqNxoOvXZu4Q3JMVBaKY1TyEhkyIOoOApWUtZiCn2k
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewPassword123!"
+}
+### Login using the updated email
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "oleg.updated1@gmail.com",
+  "password": "Password123!"
+}
+
+### Change current user password
+PUT http://localhost:8080/api/v1/users/me/password
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJvbGVnLnVwZGF0ZWQxQGdtYWlsLmNvbSIsImlhdCI6MTc4NTkxMjQ3OCwiZXhwIjoxNzg1OTk4ODc4fQ.UYWChgkUR196vqj6B_JDlr71qXYGRKtLhdhCpmoChY7-W6H78SsT0jD8fbyhPzr4
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewPassword123!"
+}
+
+### Old password should fail
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "oleg.updated1@gmail.com",
+  "password": "Password123!"
+}
+
+### New password should succeed
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "oleg.updated1@gmail.com",
+  "password": "NewPassword123!"
+}
+
+
+

@@ -11,11 +11,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
+        BadCredentialsException exception
+  ) {
+    ApiResponse<Void> response = new ApiResponse<>(
+          false,
+          "Invalid email or password",
+          null
+    );
+
+    return ResponseEntity
+          .status(HttpStatus.UNAUTHORIZED)
+          .body(response);
+  }
 
   @ExceptionHandler(OrganizationNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleOrganizationNotFound(
