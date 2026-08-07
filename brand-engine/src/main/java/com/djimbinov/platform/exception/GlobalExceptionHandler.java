@@ -13,11 +13,17 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.djimbinov.platform.ai.exception.AIServiceException;
 
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  private static final Logger log =
+        LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(FileStorageException.class)
   public ResponseEntity<ApiResponse<Void>> handleFileStorageException(
@@ -93,6 +99,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(
         Exception exception
   ) {
+
+    log.error("Unexpected exception", exception);
+
     return ResponseEntity
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(ApiResponse.error(
@@ -116,6 +125,20 @@ public class GlobalExceptionHandler {
     return ResponseEntity
           .status(HttpStatus.NOT_FOUND)
           .body(ApiResponse.error(exception.getMessage()));
+  }
+
+  @ExceptionHandler(AIServiceException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAIServiceException(
+        AIServiceException exception
+  ) {
+
+    log.error("AI service error", exception);
+
+    return ResponseEntity
+          .status(HttpStatus.BAD_GATEWAY)
+          .body(ApiResponse.error(
+                "AI service is temporarily unavailable."
+          ));
   }
 
 
