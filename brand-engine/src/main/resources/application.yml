@@ -24,3 +24,9 @@ management:
 app:
   storage:
     location: ${FILE_STORAGE_LOCATION:uploads}
+
+ai:
+  provider: openai
+  openai:
+    api-key: ${OPENAI_API_KEY}
+    model: gpt-5.6
