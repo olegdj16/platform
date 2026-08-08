@@ -3,13 +3,14 @@ spring:
     name: brand-engine
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/brand_engine
-    username: brand_engine_app
-    password: BrandEngine2026
+    url: jdbc:postgresql://localhost:5433/brand_engine
+    username: postgres
+    password: qwe12345
 
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
 
   flyway:
     enabled: true
@@ -25,8 +26,13 @@ app:
   storage:
     location: ${FILE_STORAGE_LOCATION:uploads}
 
+  jwt:
+    secret: ${JWT_SECRET:VGh5bmthaC1kZXZlbG9wbWVudC1qd3Qtc2VjcmV0LWtleS0yMDI2LXBsZWFzZS1yZXBsYWNl}
+    expiration-ms: 86400000
+
 ai:
   provider: openai
+
   openai:
     api-key: ${OPENAI_API_KEY}
     model: gpt-5.6
