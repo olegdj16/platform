@@ -139,4 +139,16 @@ public class LocalFileStorageService implements FileStorageService {
       );
     }
   }
+
+  @Override
+  public Path resolve(String storageKey) {
+
+    Path target = storageRoot
+          .resolve(storageKey)
+          .normalize();
+
+    verifyDestination(target);
+
+    return target;
+  }
 }

@@ -106,4 +106,15 @@ public class DocumentController {
                 document
           ));
   }
+
+  @GetMapping("/{id}/text")
+  public ApiResponse<String> extractText(
+        @PathVariable UUID id
+  ) {
+
+    return ApiResponse.success(
+          "Document text extracted successfully",
+          documentService.extractText(id)
+    );
+  }
 }

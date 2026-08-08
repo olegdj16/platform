@@ -21,6 +21,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +45,9 @@ class DocumentServiceTest {
   private FileStorageService fileStorageService;
 
   @Mock
+  private PdfTextExtractionService pdfTextExtractionService;
+
+  @Mock
   private DocumentRepository documentRepository;
 
   @Mock
@@ -60,7 +64,8 @@ class DocumentServiceTest {
           documentRepository,
           projectRepository,
           documentMapper,
-          fileStorageService
+          fileStorageService,
+          pdfTextExtractionService
     );
   }
 
@@ -634,5 +639,55 @@ class DocumentServiceTest {
           .delete("generated-file-key.pdf");
 
     verify(documentMapper, never()).toResponse(any());
+  }
+
+  @Test
+  void shouldExtractTextFromDocument() {
+
+    UUID documentId = UUID.randomUUID();
+
+    Document document = mock(Document.class);
+
+    when(documentRepository.findById(documentId))
+          .thenReturn(Optional.of(document));
+
+    when(document.getStorageKey())
+          .thenReturn("sample.pdf");
+
+    Path pdfPath = Path.of("uploads/sample.pdf");
+
+    when(fileStorageService.resolve("sample.pdf"))
+          .thenReturn(pdfPath);
+
+    when(pdfTextExtractionService.extractText(pdfPath))
+          .thenReturn("Brand Engine");
+
+    String result =
+          documentService.extractText(documentId);
+
+    assertEquals("Brand Engine", result);
+
+    verify(documentRepository).findById(documentId);
+    verify(fileStorageService).resolve("sample.pdf");
+    verify(pdfTextExtractionService)
+          .extractText(pdfPath);
+  }
+
+  @Test
+  void shouldThrowDocumentNotFoundExceptionWhenExtractingText() {
+
+    UUID documentId = UUID.randomUUID();
+
+    when(documentRepository.findById(documentId))
+          .thenReturn(Optional.empty());
+
+    assertThrows(
+          DocumentNotFoundException.class,
+          () -> documentService.extractText(documentId)
+    );
+
+    verify(documentRepository).findById(documentId);
+    verifyNoInteractions(fileStorageService);
+    verifyNoInteractions(pdfTextExtractionService);
   }
 }

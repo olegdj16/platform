@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.djimbinov.platform.document.dto.DocumentUploadRequest;
 import com.djimbinov.platform.document.storage.StoredFile;
 
+
 import java.util.List;
 import java.util.UUID;
 
@@ -25,17 +26,35 @@ public class DocumentService {
   private final ProjectRepository projectRepository;
   private final DocumentMapper documentMapper;
   private final FileStorageService fileStorageService;
+  private final PdfTextExtractionService pdfTextExtractionService;
 
   public DocumentService(
         DocumentRepository documentRepository,
         ProjectRepository projectRepository,
         DocumentMapper documentMapper,
-        FileStorageService fileStorageService
+        FileStorageService fileStorageService,
+        PdfTextExtractionService pdfTextExtractionService
   ) {
     this.documentRepository = documentRepository;
     this.projectRepository = projectRepository;
     this.documentMapper = documentMapper;
     this.fileStorageService = fileStorageService;
+    this.pdfTextExtractionService = pdfTextExtractionService;
+  }
+
+  @Transactional(readOnly = true)
+  public String extractText(UUID documentId) {
+
+    Document document =
+          documentRepository.findById(documentId)
+                .orElseThrow(() ->
+                      new DocumentNotFoundException(documentId));
+
+    return pdfTextExtractionService.extractText(
+          fileStorageService.resolve(
+                document.getStorageKey()
+          )
+    );
   }
 
   @Transactional

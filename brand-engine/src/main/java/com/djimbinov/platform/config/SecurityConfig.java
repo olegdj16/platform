@@ -39,8 +39,7 @@ public class SecurityConfig {
                       )
                       .permitAll()
                       .requestMatchers(
-                            "/actuator/health",
-                            "/api/v1/ai/**"
+                            "/actuator/health"
                       )
                       .permitAll()
                       .anyRequest()
