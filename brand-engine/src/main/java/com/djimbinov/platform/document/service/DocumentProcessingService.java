@@ -1,5 +1,6 @@
 package com.djimbinov.platform.document.service;
 
+import com.djimbinov.platform.ai.embedding.EmbeddingService;
 import com.djimbinov.platform.document.model.Document;
 import com.djimbinov.platform.document.model.DocumentChunk;
 import com.djimbinov.platform.document.repository.DocumentChunkRepository;
@@ -18,15 +19,18 @@ public class DocumentProcessingService {
   private final PdfTextExtractor pdfTextExtractor;
   private final TextChunkingService textChunkingService;
   private final DocumentChunkRepository documentChunkRepository;
+  private final EmbeddingService embeddingService;
 
   public DocumentProcessingService(
         PdfTextExtractor pdfTextExtractor,
         TextChunkingService textChunkingService,
-        DocumentChunkRepository documentChunkRepository
+        DocumentChunkRepository documentChunkRepository,
+        EmbeddingService embeddingService
   ) {
     this.pdfTextExtractor = pdfTextExtractor;
     this.textChunkingService = textChunkingService;
     this.documentChunkRepository = documentChunkRepository;
+    this.embeddingService = embeddingService;
   }
 
   @Transactional
@@ -59,12 +63,19 @@ public class DocumentProcessingService {
           new ArrayList<>();
 
     for (int index = 0; index < chunks.size(); index++) {
+
+      String content = chunks.get(index);
+
+      float[] embedding =
+            embeddingService.embed(content);
+
       DocumentChunk chunk =
             new DocumentChunk(
                   UUID.randomUUID(),
                   document,
                   index,
-                  chunks.get(index),
+                  content,
+                  embedding,
                   Instant.now()
             );
 

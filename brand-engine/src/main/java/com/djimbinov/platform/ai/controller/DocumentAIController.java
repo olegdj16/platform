@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/ai/documents")
+@RequestMapping("/api/v1/ai/projects")
 public class DocumentAIController {
 
   private final DocumentAIService documentAIService;
@@ -20,16 +20,17 @@ public class DocumentAIController {
     this.documentAIService = documentAIService;
   }
 
-  @PostMapping("/{documentId}/ask")
+  @PostMapping("/{projectId}/ask")
   public ChatResponse ask(
-        @PathVariable UUID documentId,
+        @PathVariable UUID projectId,
         @Valid @RequestBody DocumentQuestionRequest request
   ) {
 
-    String response = documentAIService.ask(
-          documentId,
-          request.question()
-    );
+    String response =
+          documentAIService.ask(
+                projectId,
+                request.question()
+          );
 
     return new ChatResponse(response);
   }

@@ -1,5 +1,6 @@
 package com.djimbinov.platform.document.service;
 
+import com.djimbinov.platform.ai.embedding.EmbeddingService;
 import com.djimbinov.platform.document.model.Document;
 import com.djimbinov.platform.document.model.DocumentChunk;
 import com.djimbinov.platform.document.repository.DocumentChunkRepository;
@@ -11,6 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -21,6 +23,7 @@ class DocumentProcessingServiceTest {
   private PdfTextExtractor pdfTextExtractor;
   private TextChunkingService textChunkingService;
   private DocumentChunkRepository documentChunkRepository;
+  private EmbeddingService embeddingService;
 
   private DocumentProcessingService documentProcessingService;
 
@@ -29,17 +32,19 @@ class DocumentProcessingServiceTest {
     pdfTextExtractor = mock(PdfTextExtractor.class);
     textChunkingService = mock(TextChunkingService.class);
     documentChunkRepository = mock(DocumentChunkRepository.class);
+    embeddingService = mock(EmbeddingService.class);
 
     documentProcessingService =
           new DocumentProcessingService(
                 pdfTextExtractor,
                 textChunkingService,
-                documentChunkRepository
+                documentChunkRepository,
+                embeddingService
           );
   }
 
   @Test
-  void process_shouldExtractChunkDeleteOldAndSaveNewChunks() {
+  void process_shouldExtractChunkEmbedDeleteOldAndSaveNewChunks() {
     UUID documentId = UUID.randomUUID();
     Path filePath = Path.of("uploads/test.pdf");
 
@@ -49,9 +54,7 @@ class DocumentProcessingServiceTest {
           .thenReturn(documentId);
 
     when(pdfTextExtractor.extract(filePath))
-          .thenReturn(
-                "Extracted document text"
-          );
+          .thenReturn("Extracted document text");
 
     when(textChunkingService.chunk(
           "Extracted document text"
@@ -62,6 +65,24 @@ class DocumentProcessingServiceTest {
                 "Third chunk"
           )
     );
+
+    float[] firstEmbedding =
+          new float[]{0.1f, 0.2f};
+
+    float[] secondEmbedding =
+          new float[]{0.3f, 0.4f};
+
+    float[] thirdEmbedding =
+          new float[]{0.5f, 0.6f};
+
+    when(embeddingService.embed("First chunk"))
+          .thenReturn(firstEmbedding);
+
+    when(embeddingService.embed("Second chunk"))
+          .thenReturn(secondEmbedding);
+
+    when(embeddingService.embed("Third chunk"))
+          .thenReturn(thirdEmbedding);
 
     when(documentChunkRepository.saveAll(anyList()))
           .thenAnswer(invocation ->
@@ -82,6 +103,15 @@ class DocumentProcessingServiceTest {
 
     verify(documentChunkRepository)
           .deleteByDocumentId(documentId);
+
+    verify(embeddingService)
+          .embed("First chunk");
+
+    verify(embeddingService)
+          .embed("Second chunk");
+
+    verify(embeddingService)
+          .embed("Third chunk");
 
     ArgumentCaptor<List<DocumentChunk>> captor =
           ArgumentCaptor.forClass(List.class);
@@ -124,6 +154,21 @@ class DocumentProcessingServiceTest {
           "Third chunk",
           savedChunks.get(2).getContent()
     );
+
+    assertArrayEquals(
+          firstEmbedding,
+          savedChunks.get(0).getEmbedding()
+    );
+
+    assertArrayEquals(
+          secondEmbedding,
+          savedChunks.get(1).getEmbedding()
+    );
+
+    assertArrayEquals(
+          thirdEmbedding,
+          savedChunks.get(2).getEmbedding()
+    );
   }
 
   @Test
@@ -157,6 +202,8 @@ class DocumentProcessingServiceTest {
     verify(documentChunkRepository)
           .saveAll(List.of());
 
+    verifyNoInteractions(embeddingService);
+
     assertEquals(0, result.size());
   }
 
@@ -176,7 +223,8 @@ class DocumentProcessingServiceTest {
     verifyNoInteractions(
           pdfTextExtractor,
           textChunkingService,
-          documentChunkRepository
+          documentChunkRepository,
+          embeddingService
     );
   }
 
@@ -196,7 +244,8 @@ class DocumentProcessingServiceTest {
     verifyNoInteractions(
           pdfTextExtractor,
           textChunkingService,
-          documentChunkRepository
+          documentChunkRepository,
+          embeddingService
     );
   }
 }
