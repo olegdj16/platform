@@ -1,14 +1,16 @@
 package com.djimbinov.platform.ai.service;
 
 import com.djimbinov.platform.ai.provider.AIProvider;
-import com.djimbinov.platform.document.exception.DocumentNotFoundException;
-import com.djimbinov.platform.document.service.DocumentService;
+import com.djimbinov.platform.ai.rag.DocumentRetrievalService;
+import com.djimbinov.platform.ai.rag.RagPromptBuilder;
+import com.djimbinov.platform.document.model.DocumentChunk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +21,10 @@ import static org.mockito.Mockito.*;
 class DocumentAIServiceTest {
 
   @Mock
-  private DocumentService documentService;
+  private DocumentRetrievalService documentRetrievalService;
+
+  @Mock
+  private RagPromptBuilder ragPromptBuilder;
 
   @Mock
   private AIProvider aiProvider;
@@ -28,61 +33,113 @@ class DocumentAIServiceTest {
 
   @BeforeEach
   void setUp() {
-    documentAIService = new DocumentAIService(
-          documentService,
+    documentAIService =
+          new DocumentAIService(
+                documentRetrievalService,
+                ragPromptBuilder,
+                aiProvider
+          );
+  }
+
+  @Test
+  void shouldAnswerQuestionUsingRetrievedChunks() {
+    UUID projectId = UUID.randomUUID();
+
+    String question =
+          "What technologies are used?";
+
+    DocumentChunk firstChunk =
+          mock(DocumentChunk.class);
+
+    DocumentChunk secondChunk =
+          mock(DocumentChunk.class);
+
+    List<DocumentChunk> chunks =
+          List.of(
+                firstChunk,
+                secondChunk
+          );
+
+    String prompt =
+          "RAG prompt with relevant document context";
+
+    String expectedResponse =
+          "Brand Engine uses Java, Spring Boot and PostgreSQL.";
+
+    when(documentRetrievalService.retrieve(
+          projectId,
+          question
+    )).thenReturn(chunks);
+
+    when(ragPromptBuilder.build(
+          question,
+          chunks
+    )).thenReturn(prompt);
+
+    when(aiProvider.chat(prompt))
+          .thenReturn(expectedResponse);
+
+    String result =
+          documentAIService.ask(
+                projectId,
+                question
+          );
+
+    assertEquals(
+          expectedResponse,
+          result
+    );
+
+    verify(documentRetrievalService)
+          .retrieve(
+                projectId,
+                question
+          );
+
+    verify(ragPromptBuilder)
+          .build(
+                question,
+                chunks
+          );
+
+    verify(aiProvider)
+          .chat(prompt);
+  }
+
+  @Test
+  void shouldRejectNullProjectId() {
+    assertThrows(
+          IllegalArgumentException.class,
+          () -> documentAIService.ask(
+                null,
+                "Question"
+          )
+    );
+
+    verifyNoInteractions(
+          documentRetrievalService,
+          ragPromptBuilder,
           aiProvider
     );
   }
 
   @Test
-  void shouldAnswerQuestionUsingDocument() {
-
-    UUID documentId = UUID.randomUUID();
-
-    when(documentService.extractText(documentId))
-          .thenReturn(
-                "Brand Engine uses Java, Spring Boot and PostgreSQL."
-          );
-
-    when(aiProvider.chat(any()))
-          .thenReturn(
-                "Brand Engine uses Java, Spring Boot and PostgreSQL."
-          );
-
-    String result = documentAIService.ask(
-          documentId,
-          "What technologies are used?"
-    );
-
-    assertEquals(
-          "Brand Engine uses Java, Spring Boot and PostgreSQL.",
-          result
-    );
-
-    verify(documentService)
-          .extractText(documentId);
-
-    verify(aiProvider)
-          .chat(any());
-  }
-
-  @Test
-  void shouldPropagateDocumentNotFoundException() {
-
-    UUID documentId = UUID.randomUUID();
-
-    when(documentService.extractText(documentId))
-          .thenThrow(new DocumentNotFoundException(documentId));
+  void shouldRejectBlankQuestion() {
+    UUID projectId =
+          UUID.randomUUID();
 
     assertThrows(
-          DocumentNotFoundException.class,
+          IllegalArgumentException.class,
           () -> documentAIService.ask(
-                documentId,
-                "What is this document about?"
+                projectId,
+                "   "
           )
     );
 
-    verify(documentService).extractText(documentId);
-    verifyNoInteractions(aiProvider);
+    verifyNoInteractions(
+          documentRetrievalService,
+          ragPromptBuilder,
+          aiProvider
+    );
   }
 }

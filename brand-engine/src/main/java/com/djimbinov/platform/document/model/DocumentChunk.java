@@ -8,6 +8,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Array;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -33,6 +36,11 @@ public class DocumentChunk {
   @Column(name = "content", nullable = false, columnDefinition = "TEXT")
   private String content;
 
+  @JdbcTypeCode(SqlTypes.VECTOR)
+  @Array(length = 1536)
+  @Column(name = "embedding", columnDefinition = "vector(1536)")
+  private float[] embedding;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -44,12 +52,14 @@ public class DocumentChunk {
         Document document,
         Integer chunkIndex,
         String content,
+        float[] embedding,
         Instant createdAt
   ) {
     this.id = id;
     this.document = document;
     this.chunkIndex = chunkIndex;
     this.content = content;
+    this.embedding = embedding;
     this.createdAt = createdAt;
   }
 
@@ -67,6 +77,10 @@ public class DocumentChunk {
 
   public String getContent() {
     return content;
+  }
+
+  public float[] getEmbedding() {
+    return embedding;
   }
 
   public Instant getCreatedAt() {

@@ -1,48 +1,58 @@
 package com.djimbinov.platform.ai.service;
 
 import com.djimbinov.platform.ai.provider.AIProvider;
-import com.djimbinov.platform.document.service.DocumentService;
+import com.djimbinov.platform.ai.rag.DocumentRetrievalService;
+import com.djimbinov.platform.ai.rag.RagPromptBuilder;
+import com.djimbinov.platform.document.model.DocumentChunk;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class DocumentAIService {
 
-  private final DocumentService documentService;
+  private final DocumentRetrievalService documentRetrievalService;
+  private final RagPromptBuilder ragPromptBuilder;
   private final AIProvider aiProvider;
 
   public DocumentAIService(
-        DocumentService documentService,
+        DocumentRetrievalService documentRetrievalService,
+        RagPromptBuilder ragPromptBuilder,
         AIProvider aiProvider
   ) {
-    this.documentService = documentService;
+    this.documentRetrievalService = documentRetrievalService;
+    this.ragPromptBuilder = ragPromptBuilder;
     this.aiProvider = aiProvider;
   }
 
   public String ask(
-        UUID documentId,
+        UUID projectId,
         String question
   ) {
+    if (projectId == null) {
+      throw new IllegalArgumentException(
+            "Project id must not be null"
+      );
+    }
 
-    String documentText =
-          documentService.extractText(documentId);
+    if (question == null || question.isBlank()) {
+      throw new IllegalArgumentException(
+            "Question must not be null or blank"
+      );
+    }
 
-    String prompt = """
-          Answer the question using only the document provided below.
+    List<DocumentChunk> chunks =
+          documentRetrievalService.retrieve(
+                projectId,
+                question
+          );
 
-          If the answer cannot be found in the document, say:
-          "The document does not contain that information."
-
-          DOCUMENT:
-          %s
-
-          QUESTION:
-          %s
-          """.formatted(
-          documentText,
-          question
-    );
+    String prompt =
+          ragPromptBuilder.build(
+                question,
+                chunks
+          );
 
     return aiProvider.chat(prompt);
   }

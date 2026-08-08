@@ -35,17 +35,20 @@ class DocumentAIControllerTest {
   @Test
   void askShouldReturnAiResponse() throws Exception {
 
-    UUID documentId = UUID.randomUUID();
+    UUID projectId = UUID.randomUUID();
 
     when(documentAIService.ask(
-          documentId,
+          projectId,
           "What technologies does Brand Engine use?"
     )).thenReturn(
           "Brand Engine uses Java 21 and Spring Boot."
     );
 
     mockMvc.perform(
-                post("/api/v1/ai/documents/{documentId}/ask", documentId)
+                post(
+                      "/api/v1/ai/projects/{projectId}/ask",
+                      projectId
+                )
                       .contentType(MediaType.APPLICATION_JSON)
                       .content("""
                             {
@@ -56,22 +59,28 @@ class DocumentAIControllerTest {
           .andExpect(status().isOk())
           .andExpect(
                 jsonPath("$.response")
-                      .value("Brand Engine uses Java 21 and Spring Boot.")
+                      .value(
+                            "Brand Engine uses Java 21 and Spring Boot."
+                      )
           );
 
     verify(documentAIService).ask(
-          documentId,
+          projectId,
           "What technologies does Brand Engine use?"
     );
   }
 
   @Test
-  void askShouldReturnBadRequestWhenQuestionIsBlank() throws Exception {
+  void askShouldReturnBadRequestWhenQuestionIsBlank()
+        throws Exception {
 
-    UUID documentId = UUID.randomUUID();
+    UUID projectId = UUID.randomUUID();
 
     mockMvc.perform(
-                post("/api/v1/ai/documents/{documentId}/ask", documentId)
+                post(
+                      "/api/v1/ai/projects/{projectId}/ask",
+                      projectId
+                )
                       .contentType(MediaType.APPLICATION_JSON)
                       .content("""
                             {
