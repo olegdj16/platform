@@ -235,11 +235,11 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "title": "Brand Engine Memory Test"
+  "title": "Brand Engine Memory Test 2"
 }
 
 ###
-POST http://localhost:8080/api/v1/ai/conversations/96774825-88cf-468d-9155-c479f645fe4b/chat
+POST http://localhost:8080/api/v1/ai/conversations/99e2a9f4-6b4b-4672-b81f-a6f82b4fe74c/chat
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -248,7 +248,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:8080/api/v1/ai/conversations/96774825-88cf-468d-9155-c479f645fe4b/chat
+POST http://localhost:8080/api/v1/ai/conversations/99e2a9f4-6b4b-4672-b81f-a6f82b4fe74c/chat
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
