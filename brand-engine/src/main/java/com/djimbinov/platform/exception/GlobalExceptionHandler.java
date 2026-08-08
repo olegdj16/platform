@@ -1,5 +1,6 @@
 package com.djimbinov.platform.exception;
 
+import com.djimbinov.platform.ai.exception.ConversationNotFoundException;
 import com.djimbinov.platform.common.ApiResponse;
 import com.djimbinov.platform.document.exception.DocumentNotFoundException;
 import com.djimbinov.platform.document.exception.FileStorageException;
@@ -141,5 +142,13 @@ public class GlobalExceptionHandler {
           ));
   }
 
+  @ExceptionHandler(ConversationNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleConversationNotFound(
+        ConversationNotFoundException exception
+  ) {
+    return ResponseEntity
+          .status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error(exception.getMessage()));
+  }
 
 }
