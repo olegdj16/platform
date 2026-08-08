@@ -32,11 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentServiceTest {
@@ -56,6 +52,9 @@ class DocumentServiceTest {
   @Mock
   private DocumentMapper documentMapper;
 
+  @Mock
+  private DocumentProcessingService documentProcessingService;
+
   private DocumentService documentService;
 
   @BeforeEach
@@ -65,7 +64,8 @@ class DocumentServiceTest {
           projectRepository,
           documentMapper,
           fileStorageService,
-          pdfTextExtractionService
+          pdfTextExtractionService,
+          documentProcessingService
     );
   }
 
@@ -122,6 +122,7 @@ class DocumentServiceTest {
     verify(documentMapper).toModel(request, project);
     verify(documentRepository).save(document);
     verify(documentMapper).toResponse(savedDocument);
+    verifyNoInteractions(documentProcessingService);
   }
 
   @Test
@@ -465,6 +466,11 @@ class DocumentServiceTest {
     UUID documentId = UUID.randomUUID();
     Instant createdAt = Instant.now();
 
+    Path storedPath =
+          Path.of(
+                "uploads/generated-file-key.pdf"
+          );
+
     MockMultipartFile file = new MockMultipartFile(
           "file",
           "architecture.pdf",
@@ -517,6 +523,15 @@ class DocumentServiceTest {
     when(documentMapper.toResponse(savedDocument))
           .thenReturn(expectedResponse);
 
+    when(savedDocument.getStorageKey())
+          .thenReturn(
+                "generated-file-key.pdf"
+          );
+
+    when(fileStorageService.resolve(
+          "generated-file-key.pdf"
+    )).thenReturn(storedPath);
+
     DocumentResponse result = documentService.upload(request);
 
     assertSame(expectedResponse, result);
@@ -544,6 +559,14 @@ class DocumentServiceTest {
     );
 
     verify(documentRepository).save(document);
+    verify(fileStorageService)
+          .resolve("generated-file-key.pdf");
+
+    verify(documentProcessingService)
+          .process(
+                savedDocument,
+                storedPath
+          );
     verify(documentMapper).toResponse(savedDocument);
     verify(fileStorageService, never()).delete(any());
   }
@@ -639,6 +662,10 @@ class DocumentServiceTest {
           .delete("generated-file-key.pdf");
 
     verify(documentMapper, never()).toResponse(any());
+
+    verifyNoInteractions(
+          documentProcessingService
+    );
   }
 
   @Test
@@ -689,5 +716,94 @@ class DocumentServiceTest {
     verify(documentRepository).findById(documentId);
     verifyNoInteractions(fileStorageService);
     verifyNoInteractions(pdfTextExtractionService);
+  }
+
+  @Test
+  void shouldDeleteStoredFileWhenDocumentProcessingFails() {
+    UUID projectId = UUID.randomUUID();
+
+    MockMultipartFile file = new MockMultipartFile(
+          "file",
+          "architecture.pdf",
+          "application/pdf",
+          "pdf-content".getBytes()
+    );
+
+    DocumentUploadRequest request =
+          new DocumentUploadRequest(
+                projectId,
+                "Architecture Diagram",
+                file
+          );
+
+    Project project = mock(Project.class);
+    Document document = mock(Document.class);
+    Document savedDocument = mock(Document.class);
+
+    StoredFile storedFile = new StoredFile(
+          "architecture.pdf",
+          "application/pdf",
+          "generated-file-key.pdf",
+          file.getSize()
+    );
+
+    Path storedPath =
+          Path.of(
+                "uploads/generated-file-key.pdf"
+          );
+
+    when(projectRepository.findById(projectId))
+          .thenReturn(Optional.of(project));
+
+    when(fileStorageService.store(file))
+          .thenReturn(storedFile);
+
+    when(documentMapper.toModel(
+          any(DocumentRequest.class),
+          eq(project)
+    )).thenReturn(document);
+
+    when(documentRepository.save(document))
+          .thenReturn(savedDocument);
+
+    when(savedDocument.getStorageKey())
+          .thenReturn(
+                "generated-file-key.pdf"
+          );
+
+    when(fileStorageService.resolve(
+          "generated-file-key.pdf"
+    )).thenReturn(storedPath);
+
+    RuntimeException processingException =
+          new RuntimeException(
+                "Embedding generation failed"
+          );
+
+    doThrow(processingException)
+          .when(documentProcessingService)
+          .process(
+                savedDocument,
+                storedPath
+          );
+
+    RuntimeException result =
+          assertThrows(
+                RuntimeException.class,
+                () -> documentService.upload(request)
+          );
+
+    assertSame(
+          processingException,
+          result
+    );
+
+    verify(fileStorageService)
+          .delete(
+                "generated-file-key.pdf"
+          );
+
+    verify(documentMapper, never())
+          .toResponse(any());
   }
 }

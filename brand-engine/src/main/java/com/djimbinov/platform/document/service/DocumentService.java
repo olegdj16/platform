@@ -16,6 +16,7 @@ import com.djimbinov.platform.document.dto.DocumentUploadRequest;
 import com.djimbinov.platform.document.storage.StoredFile;
 
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,19 +28,22 @@ public class DocumentService {
   private final DocumentMapper documentMapper;
   private final FileStorageService fileStorageService;
   private final PdfTextExtractionService pdfTextExtractionService;
+  private final DocumentProcessingService documentProcessingService;
 
   public DocumentService(
         DocumentRepository documentRepository,
         ProjectRepository projectRepository,
         DocumentMapper documentMapper,
         FileStorageService fileStorageService,
-        PdfTextExtractionService pdfTextExtractionService
+        PdfTextExtractionService pdfTextExtractionService,
+        DocumentProcessingService documentProcessingService
   ) {
     this.documentRepository = documentRepository;
     this.projectRepository = projectRepository;
     this.documentMapper = documentMapper;
     this.fileStorageService = fileStorageService;
     this.pdfTextExtractionService = pdfTextExtractionService;
+    this.documentProcessingService = documentProcessingService;
   }
 
   @Transactional(readOnly = true)
@@ -141,14 +145,33 @@ public class DocumentService {
 
     try {
       Document document =
-            documentMapper.toModel(documentRequest, project);
+            documentMapper.toModel(
+                  documentRequest,
+                  project
+            );
 
       Document savedDocument =
             documentRepository.save(document);
 
-      return documentMapper.toResponse(savedDocument);
+      Path filePath =
+            fileStorageService.resolve(
+                  savedDocument.getStorageKey()
+            );
+
+      documentProcessingService.process(
+            savedDocument,
+            filePath
+      );
+
+      return documentMapper.toResponse(
+            savedDocument
+      );
+
     } catch (RuntimeException exception) {
-      fileStorageService.delete(storedFile.storageKey());
+      fileStorageService.delete(
+            storedFile.storageKey()
+      );
+
       throw exception;
     }
   }
